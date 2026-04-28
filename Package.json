@@ -1,0 +1,14 @@
+{
+  "name": "calculadora-disfarcada",
+  "version": "1.0.0",
+  "description": "App calculadora que oculta outros apps",
+  "main": "index.html",
+  "scripts": {
+    "build": "npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^5.7.0",
+    "@capacitor/core": "^5.7.0",
+    "@capacitor/cli": "^5.7.0"
+  }
+}

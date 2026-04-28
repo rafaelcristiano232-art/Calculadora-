@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Calculadora</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #1e1e2f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .calculator {
+            background: #2d2d44;
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 320px;
+        }
+
+        .display {
+            background: #0f0f1a;
+            color: #ffffff;
+            font-size: 48px;
+            text-align: right;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            word-wrap: break-word;
+            min-height: 80px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        button {
+            background: #3b3b5c;
+            border: none;
+            font-size: 28px;
+            padding: 20px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            background: #5a5a7a;
+        }
+
+        .operator {
+            background: #ff8c42;
+        }
+
+        .equal {
+            background: #4c9aff;
+            grid-column: span 2;
+        }
+
+        .hidden-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .hidden-panel.active {
+            display: flex;
+        }
+
+        .hidden-box {
+            background: #1e1e2f;
+            padding: 30px;
+            border-radius: 30px;
+            width: 85%;
+            max-width: 500px;
+            text-align: center;
+            max-height: 85%;
+            overflow-y: auto;
+        }
+
+        .hidden-box h2 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .config-area {
+            background: #2d2d44;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .config-area input, .config-area select {
+            width: 80%;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            font-size: 14px;
+            text-align: center;
+            background: #0f0f1a;
+            color: white;
+            margin: 5px 0;
+        }
+
+        .app-list {
+            background: #2d2d44;
+            border-radius: 15px;
+            padding: 10px;
+            max-height: 350px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+
+        .app-item {
+            background: #3b3b5c;
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 10px;
+            color: white;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .app-name {
+            font-size: 14px;
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .app-package {
+            font-size: 10px;
+            color: #aaa;
+            word-break: break-all;
+            width: 100%;
+        }
+
+        .hide-btn, .enable-btn {
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .hide-btn {
+            background: #ff5555;
+        }
+
+        .enable-btn {
+            background: #4c9aff;
+        }
+
+        .admin-status {
+            background: #ff8c42;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .close-btn, .save-password, .admin-btn {
+            background: #4c9aff;
+            padding: 12px;
+            border-radius: 25px;
+            margin-top: 10px;
+            border: none;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .danger-btn {
+            background: #ff5555;
+        }
+
+        .note {
+            color: #ff8888;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: #88ff88;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator" id="calculator">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+        <button class="operator" data-action="clear">C</button>
+        <button class="operator" data-action="sign">±</button>
+        <button class="operator" data-action="percent">%</button>
+        <button class="operator" data-action="divide">÷</button>
+        
+        <button data-number="7">7</button>
+        <button data-number="8">8</button>
+        <button data-number="9">9</button>
+        <button class="operator" data-action="multiply">×</button>
+        
+        <button data-number="4">4</button>
+        <button data-number="5">5</button>
+        <button data-number="6">6</button>
+        <button class="operator" data-action="subtract">-</button>
+        
+        <button data-number="1">1</button>
+        <button data-number="2">2</button>
+        <button data-number="3">3</button>
+        <button class="operator" data-action="add">+</button>
+        
+        <button data-number="0">0</button>
+        <button data-number="00">00</button>
+        <button data-number=".">.</button>
+        <button class="equal" data-action="equals">=</button>
+    </div>
+</div>
+
+<div class="hidden-panel" id="hiddenPanel">
+    <div class="hidden-box">
+        <h2>🔐 Área Secreta</h2>
+        
+        <div id="loginArea" class="config-area">
+            <p style="color:white;">Digite a senha:</p>
+            <input type="password" id="passwordInput" placeholder="Senha" class="password-input">
+            <button id="unlockBtn" class="save-password">Desbloquear</button>
+        </div>
+
+        <div id="adminArea" style="display:none;">
+            
+            <!-- Status do Administrador -->
+            <div class="config-area" id="adminStatusArea">
+                <p>👑 Status do Administrador</p>
+                <div id="adminStatusText" class="admin-status">Verificando...</div>
+                <button id="requestAdminBtn" class="admin-btn">🔓 Ativar Modo Administrador</button>
+                <button id="removeAdminBtn" class="admin-btn danger-btn" style="background:#ff5555;">🚫 Remover Administrador</button>
+            </div>
+
+            <!-- Alterar senha -->
+            <div class="config-area">
+                <p>🔑 Alterar senha secreta</p>
+                <input type="password" id="newPassword" placeholder="Nova senha (mínimo 4 dígitos)">
+                <button id="changePasswordBtn" class="save-password" style="background:#ff8c42;">Salvar senha</button>
+            </div>
+
+            <!-- Lista de apps -->
+            <div class="config-area">
+                <p>📱 Apps instalados (clique em Ocultar para desabilitar)</p>
+                <button id="refreshApps" class="save-password" style="background:#3b3b5c;">🔄 Atualizar lista</button>
+                <div class="app-list" id="appList">
+                    <div style="color:#aaa; text-align:center;">Carregando...</div>
+                </div>
+            </div>
+
+            <p class="note">⚠️ Como funciona:<br>
+            • "Ocultar" = Desabilita o app (ele some da gaveta e não executa)<br>
+            • Para reativar, clique em "Reativar" na lista<br>
+            • Requer permissão de administrador do dispositivo ativada<br>
+            • Funciona em dispositivos SEM root (API 21+)</p>
+        </div>
+
+        <button class="close-btn" id="closePanel">Fechar</button>
+    </div>
+</div>
+
+<script>
+    // ========== CALCULADORA ==========
+    let currentInput = "0";
+    let previousInput = "";
+    let operation = null;
+    let shouldResetScreen = false;
+    const display = document.getElementById('display');
+
+    function updateDisplay() {
+        display.innerText = currentInput.length > 12 ? parseFloat(currentInput).toExponential(8) : currentInput;
+    }
+
+    function appendNumber(number) {
+        if (shouldResetScreen) {
+            currentInput = "";
+            shouldResetScreen = false;
+        }
+        if (number === '.' && currentInput.includes('.')) return;
+        if (currentInput === "0" && number !== '.') currentInput = number;
+        else currentInput += number;
+        updateDisplay();
+    }
+
+    function clearAll() {
+        currentInput = "0";
+        previousInput = "";
+        operation = null;
+        updateDisplay();
+    }
+
+    function sign() {
+        currentInput = (parseFloat(currentInput) * -1).toString();
+        updateDisplay();
+    }
+
+    function percent() {
+        currentInput = (parseFloat(currentInput) / 100).toString();
+        updateDisplay();
+    }
+
+    function chooseOperation(op) {
+        if (operation !== null && !shouldResetScreen) calculate();
+        previousInput = currentInput;
+        operation = op;
+        shouldResetScreen = true;
+    }
+
+    function calculate() {
+        if (operation === null || shouldResetScreen) return;
+        let result;
+        const prev = parseFloat(previousInput);
+        const curr = parseFloat(currentInput);
+        if (isNaN(prev) || isNaN(curr)) return;
+        switch(operation) {
+            case 'add': result = prev + curr; break;
+            case 'subtract': result = prev - curr; break;
+            case 'multiply': result = prev * curr; break;
+            case 'divide': result = curr === 0 ? "Erro" : prev / curr; break;
+            default: return;
+        }
+        currentInput = result.toString();
+        operation = null;
+        shouldResetScreen = true;
+        updateDisplay();
+    }
+
+    // ========== SISTEMA DE SENHA ==========
+    let secretBuffer = "";
+    let currentPassword = "1234";
+    
+    function checkSecretCode(inputKey) {
+        secretBuffer += inputKey;
+        if (secretBuffer.length > 4) secretBuffer = secretBuffer.slice(-4);
+        if (secretBuffer === currentPassword) {
+            document.getElementById('hiddenPanel').classList.add('active');
+            secretBuffer = "";
+            checkAdminStatus(); // Verifica status ao abrir
+        }
+    }
+
+    // ========== ADMINISTRADOR DO DISPOSITIVO (Bridge para Java) ==========
+    // Estes métodos serão chamados via Android WebView interface
+    
+    let isAdminActive = false;
+    
+    function checkAdminStatus() {
+        if (window.AndroidBridge && window.AndroidBridge.isAdminActive) {
+            isAdminActive = window.AndroidBridge.isAdminActive();
+            updateAdminUI();
+        } else {
+            // Simulação para teste no navegador
+            isAdminActive = false;
+            updateAdminUI();
+        }
+    }
+    
+    function updateAdminUI() {
+        const statusText = document.getElementById('adminStatusText');
+        const requestBtn = document.getElementById('requestAdminBtn');
+        const removeBtn = document.getElementById('removeAdminBtn');
+        
+        if (isAdminActive) {
+            statusText.innerHTML = '✅ STATUS: Administrador ATIVO<br>Você pode ocultar/desabilitar apps';
+            statusText.style.background = '#2a9d8f';
+            requestBtn.style.display = 'none';
+            removeBtn.style.display = 'block';
+        } else {
+            statusText.innerHTML = '❌ STATUS: Administrador INATIVO<br>Ative para poder ocultar apps';
+            statusText.style.background = '#e63946';
+            requestBtn.style.display = 'block';
+            removeBtn.style.display = 'none';
+        }
+    }
+    
+    function requestAdmin() {
+        if (window.AndroidBridge && window.AndroidBridge.requestAdmin) {
+            window.AndroidBridge.requestAdmin();
+        } else {
+            alert('Modo demonstração: Em um APK real, isso abriria a tela de ativação de administrador.');
+        }
+    }
+    
+    function removeAdmin() {
+        if (window.AndroidBridge && window.AndroidBridge.removeAdmin) {
+            window.AndroidBridge.removeAdmin();
+        } else {
+            alert('Modo demonstração: Removeria permissão de administrador.');
+        }
+    }
+    
+    // Funções para gerenciar apps (desabilitar/habilitar)
+    function disableApp(packageName, appName) {
+        if (!isAdminActive) {
+            alert('❌ Ative o modo administrador primeiro!');
+            return;
+        }
+        if (window.AndroidBridge && window.AndroidBridge.disableApp) {
+            window.AndroidBridge.disableApp(packageName);
+            alert(`✅ ${appName} foi desabilitado/ocultado!\nEle sumirá da gaveta de apps.`);
+            setTimeout(() => loadInstalledApps(), 1000);
+        } else {
+            alert(`[SIMULAÇÃO] ${appName} seria desabilitado. Em APK real funcionaria.`);
+        }
+    }
+    
+    function enableApp(packageName, appName) {
+        if (!isAdminActive) {
+            alert('❌ Ative o modo administrador primeiro!');
+            return;
+        }
+        if (window.AndroidBridge && window.AndroidBridge.enableApp) {
+            window.AndroidBridge.enableApp(packageName);
+            alert(`✅ ${appName} foi reativado!`);
+            setTimeout(() => loadInstalledApps(), 1000);
+        } else {
+            alert(`[SIMULAÇÃO] ${appName} seria reativado.`);
+        }
+    }
+    
+    // Carregar lista de apps instalados
+    function loadInstalledApps() {
+        const appListDiv = document.getElementById('appList');
+        appListDiv.innerHTML = '<div style="color:#aaa;">Carregando apps...</div>';
+        
+        if (window.AndroidBridge && window.AndroidBridge.getInstalledApps) {
+            const appsJson = window.AndroidBridge.getInstalledApps();
+            const apps = JSON.parse(appsJson);
+            displayAppList(apps);
+        } else {
+            // Simulação para teste
+            const mockApps = [
+                { name: "Instagram", package: "com.instagram.android", enabled: true },
+                { name: "WhatsApp", package: "com.whatsapp", enabled: true },
+                { name: "Facebook", package: "com.facebook.katana", enabled: true },
+                { name: "TikTok", package: "com.zhiliaoapp.musically", enabled: true },
+                { name: "YouTube", package: "com.google.android.youtube", enabled: true }
+            ];
+            displayAppList(mockApps);
+        }
+    }
+    
+    function displayAppList(apps) {
+        const appListDiv = document.getElementById('appList');
+        if (!apps || apps.length === 0) {
+            appListDiv.innerHTML = '<div style="color:#aaa;">Nenhum app encontrado</div>';
+            return;
+        }
+        
+        appListDiv.innerHTML = apps.map(app => `
+            <div class="app-item">
+                <div style="flex:1">
+                    <div class="app-name">📱 ${app.name}</div>
+                    <div class="app-package">${app.package}</div>
+                </div>
+                ${app.enabled ? 
+                    `<button class="hide-btn" onclick="disableApp('${app.package}', '${app.name}')">Ocultar</button>` :
+                    `<button class="enable-btn" onclick="enableApp('${app.package}', '${app.name}')">Reativar</button>`
+                }
+            </div>
+        `).join('');
+    }
+    
+    // ========== EVENTOS DA ÁREA SECRETA ==========
+    const loginArea = document.getElementById('loginArea');
+    const adminArea = document.getElementById('adminArea');
+    
+    document.getElementById('unlockBtn').addEventListener('click', () => {
+        const enteredPassword = document.getElementById('passwordInput').value;
+        if (enteredPassword === currentPassword) {
+            loginArea.style.display = 'none';
+            adminArea.style.display = 'block';
+            checkAdminStatus();
+            loadInstalledApps();
+        } else {
+            alert('Senha incorreta!');
+        }
+    });
+    
+    document.getElementById('changePasswordBtn').addEventListener('click', () => {
+        const newPass = document.getElementById('newPassword').value;
+        if (newPass && newPass.length >= 4) {
+            currentPassword = newPass;
+            alert(`Senha alterada para: ${newPass}\nUse essa senha na calculadora.`);
+            document.getElementById('newPassword').value = '';
+        } else {
+            alert('Senha deve ter pelo menos 4 caracteres');
+        }
+    });
+    
+    document.getElementById('requestAdminBtn').addEventListener('click', () => {
+        requestAdmin();
+        setTimeout(() => checkAdminStatus(), 500);
+    });
+    
+    document.getElementById('removeAdminBtn').addEventListener('click', () => {
+        removeAdmin();
+        setTimeout(() => checkAdminStatus(), 500);
+    });
+    
+    document.getElementById('refreshApps').addEventListener('click', () => {
+        loadInstalledApps();
+    });
+    
+    document.getElementById('closePanel').addEventListener('click', () => {
+        document.getElementById('hiddenPanel').classList.remove('active');
+        loginArea.style.display = 'block';
+        adminArea.style.display = 'none';
+        document.getElementById('passwordInput').value = '';
+    });
+    
+    // ========== EVENTOS DA CALCULADORA ==========
+    document.querySelectorAll('button[data-number]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const num = btn.getAttribute('data-number');
+            appendNumber(num);
+            if (num !== '.') checkSecretCode(num);
+        });
+    });
+    
+    document.querySelectorAll('.operator').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.getAttribute('data-action');
+            if (action === 'clear') clearAll();
+            else if (action === 'sign') sign();
+            else if (action === 'percent') percent();
+            else if (action === 'divide') chooseOperation('divide');
+            else if (action === 'multiply') chooseOperation('multiply');
+            else if (action === 'subtract') chooseOperation('subtract');
+            else if (action === 'add') chooseOperation('add');
+            else if (action === 'equals') calculate();
+        });
+    });
+    
+    updateDisplay();
+</script>
+
+</body>
+</html>
